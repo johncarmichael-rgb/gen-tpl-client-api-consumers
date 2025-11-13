@@ -1,0 +1,47 @@
+import config from '@/config'
+import HttpService from '{{ httpServiceImport }}';
+
+{% if nodegenRc.helpers.useObjectReduceByMap %}import objectReduceByMap from 'object-reduce-by-map';{% endif %}
+
+{% set interfaces = importInterfaces(operations) %}
+{% for interface in interfaces -%}
+import { {{ interface }} } from './interfaces/{{ interface }}';
+{%- endfor %}
+
+export default class {{ucFirst(operation_name)}}Service {
+  private static basePath = config.{{ serviceName }}.url + config.{{ serviceName }}.basePath;
+{% for op in operations -%}
+  {% for method, path in op.path -%}
+    {% if isValidMethod(method)%}
+  /**
+   *  Operation ID: {{ path.operationId }}
+   *  Summary: {{ path.summary }}
+   *  Description: {{ path.description }}
+   */
+  public static {{ path.operationId }} ({{ pathParamsToDomainParams(method, path, true) }}): Promise<{{ path['x-response-definitions']['200'] if path['x-response-definitions']['200'] else 'void' }}>{
+    {% if nodegenRc.helpers.useObjectReduceByMap %}
+      {% for requestType, value in path['x-request-definitions'] -%}
+        {% if requestType === 'body' %}
+          // {{ value.params[0].path}}
+          const map{{ requestType }} = {{ _.trimEnd(paramsOutputReducer(_.get(swagger, value.params[0].path)), ',') }}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    return HttpService.sendRequest({
+      method: '{{ method | upper}}',
+      path: {{ucFirst(operation_name)}}Service.basePath + '{{ urlPathJoin(op.path_name)}}',
+      {% for requestType, value in path['x-request-definitions'] -%}
+        {% if requestType === 'path' %}params: pathParams,
+        {% elif requestType === 'query' %}qs: {{ requestType }},
+        {% elif requestType === 'headers' or requestType === 'header' %}headers,
+        {% else %}{% if nodegenRc.helpers.useObjectReduceByMap %}{{ requestType }}: objectReduceByMap({{ requestType }}, map{{ requestType }}){% else %}{{ requestType }}{% endif %},
+        {% endif %}
+      {%- endfor %}
+      {% if baseUrl %}baseUrl: '{{ baseUrl }}',{% endif %}
+    })
+  }
+    {% endif %}
+  {%- endfor %}
+{%- endfor %}
+}
