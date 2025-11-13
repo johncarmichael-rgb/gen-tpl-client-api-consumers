@@ -1,14 +1,14 @@
 /**
  * Base API Service
- * 
+ *
  * This class provides a centralized way to configure the base path for all API services.
  * Each frontend app should call BaseApiService.configure() on startup with their config.
- * 
+ *
  * Usage in frontend app:
  * ```typescript
  * import { BaseApiService } from 'apis/api-mono/services/BaseApiService';
  * import { config } from '@/config';
- * 
+ *
  * // On app initialization
  * BaseApiService.configure({
  *   url: config.api.url,
@@ -18,7 +18,7 @@
  */
 
 export interface ApiConfig {
-  url: string;
+  url?: string;
   basePath: string;
 }
 
@@ -30,8 +30,8 @@ export class BaseApiService {
    * Configure the base path for all API services
    * This should be called once during app initialization
    */
-  public static configure(config: ApiConfig): void {
-    BaseApiService._basePath = config.url + config.basePath;
+  public static configure (config: ApiConfig): void {
+    BaseApiService._basePath = config.url ? config.url + config.basePath : config.basePath;
     BaseApiService._configured = true;
   }
 
@@ -39,7 +39,7 @@ export class BaseApiService {
    * Get the configured base path
    * Throws an error if configure() hasn't been called
    */
-  protected static get basePath(): string {
+  protected static get basePath (): string {
     if (!BaseApiService._configured) {
       throw new Error(
         'BaseApiService not configured. Call BaseApiService.configure() during app initialization.'
