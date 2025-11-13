@@ -1,5 +1,5 @@
-import config from '@/config'
 import HttpService from '{{ httpServiceImport }}';
+import { BaseApiService } from './BaseApiService';
 
 {% if nodegenRc.helpers.useObjectReduceByMap %}import objectReduceByMap from 'object-reduce-by-map';{% endif %}
 
@@ -8,8 +8,7 @@ import HttpService from '{{ httpServiceImport }}';
 import { {{ interface }} } from './interfaces/{{ interface }}';
 {%- endfor %}
 
-export default class {{ucFirst(operation_name)}}Service {
-  private static basePath = config.{{ serviceName }}.url + config.{{ serviceName }}.basePath;
+export default class {{ucFirst(operation_name)}}Service extends BaseApiService {
 {% for op in operations -%}
   {% for method, path in op.path -%}
     {% if isValidMethod(method)%}

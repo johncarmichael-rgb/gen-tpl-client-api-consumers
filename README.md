@@ -4,11 +4,68 @@ Used in conjunction with generate-it to output api clients for server to server 
 
 The template expects you to inject your own service called "HttpService" which it will then use to call your APIs.
 
-Within the classes created, you set the url before the path to be called with {{basePath}} which if not set defaults to '/'.
+All API path configuration is handled automatically through the `BaseApiService.configure()` method. 
 
-If you need to import additional files to either get or calculate the basePath, you can do so with additionalImports injectable array of objects.
+## BaseApiService Configuration
 
-## Full example by js script:
+All generated service classes extend `BaseApiService`, which provides centralized configuration for API endpoints. **You must configure the BaseApiService in your application before making any API calls**, otherwise the services will throw an error.
+
+### How to Configure
+
+Call `BaseApiService.configure()` once during your application initialization (e.g., in your main app entry point or root component):
+
+```typescript
+import { BaseApiService as YourApiBaseApiService } from './apis/your-api/services/BaseApiService';
+
+// Configure on app startup
+YourApiBaseApiService.configure({
+  url: 'https://api.example.com',  // Your API server URL
+  basePath: '/v1'                   // Your API base path
+});
+```
+
+### Example: React Application
+
+```typescript
+// src/index.tsx or src/App.tsx
+import { BaseApiService as YourApiBaseApiService } from '@/apis/your-api/services/BaseApiService';
+import { config } from '@/config';
+
+// Configure before rendering
+YourApiBaseApiService.configure({
+  url: config.api.url,
+  basePath: config.api.basePath
+});
+
+// Now you can use any generated service
+import UserService from '@/apis/api-mono/services/UserService';
+const users = await UserService.getUsers();
+```
+
+### Example: Node.js Application
+
+```typescript
+// src/app.ts
+import { BaseApiService as YourApiBaseApiService } from './apis/your-api/services/BaseApiService';
+
+YourApiBaseApiService.configure({
+  url: process.env.API_URL || 'http://localhost:3000',
+  basePath: '/api/v1'
+});
+
+// Services are now ready to use
+```
+
+### Important Notes
+
+- **Setup Check**: Each generated service method checks if `BaseApiService.configure()` has been called. If not, it throws an error: `"BaseApiService not configured. Call BaseApiService.configure() during app initialization."`
+- **Call Once**: You only need to call `configure()` once during application startup
+- **All Services Share Config**: All generated services inherit from `BaseApiService` and use the same configuration
+- **Check Configuration**: You can verify if the service is configured using `BaseApiService.isConfigured()`
+
+## How to Generate the APIs
+
+Copy this script into your project and run it to generate the API client services:
 
 ```js
 
@@ -22,15 +79,14 @@ const generate = (configArray) => {
   if (configArray.length > 0) {
     const apiName = configArray.shift();
     const config = {
-      swaggerFilePath: '../../' + apiName + '/swagger/build/api_spec.yml',
+      swaggerFilePath: '../../' + apiName + '-spec/build/release.yml', // correct to your project setup, this assumes this file exists
       targetDir: './src/apis/' + apiName,
-      template: 'https://github.com/acr-lfr/generate-it-typescript-client-to-server.git',
+      template: 'https://github.com/johncarmichael-rgb/gen-tpl-client-api-consumers.git',
       // Inject dynamic content to the tpl here:
       variables: {
-        httpServiceImport: '@/services/HttpService',
-        basePath: `config.${apiName}`
+        httpServiceImport: '@/services/HttpService'
       },
-      dontRunComparisonTool: false,
+      dontRunComparisonTool: true,
       dontUpdateTplCache: false,
       mockServer: false,
       segmentsCount: 1,
