@@ -19,7 +19,7 @@
 
 export interface ApiConfig {
   url?: string;
-  basePath: string;
+  basePath?: string;
 }
 
 export class BaseApiService {
@@ -31,8 +31,19 @@ export class BaseApiService {
    * This should be called once during app initialization
    */
   public static configure (config: ApiConfig): void {
-    BaseApiService._basePath = config.url ? config.url + config.basePath : config.basePath;
+    const normalizedBasePath = BaseApiService.normalizeBasePath(config.basePath);
+    const normalizedUrl = (config.url || '').trim().replace(/\/+$/, '');
+
+    BaseApiService._basePath = normalizedUrl ? normalizedUrl + normalizedBasePath : normalizedBasePath;
     BaseApiService._configured = true;
+  }
+
+  private static normalizeBasePath (basePath?: string): string {
+    const raw = (basePath || '').trim();
+    const safeBasePath = raw && raw !== 'undefined' && raw !== 'null' ? raw : '/api/';
+    const withLeadingSlash = safeBasePath.startsWith('/') ? safeBasePath : `/${safeBasePath}`;
+
+    return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
   }
 
   /**
