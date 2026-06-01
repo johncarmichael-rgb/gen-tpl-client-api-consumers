@@ -37,6 +37,7 @@ export default class {{ucFirst(operation_name)}}Service extends BaseApiService {
         {% else %}{% if nodegenRc.helpers.useObjectReduceByMap %}{{ requestType }}: objectReduceByMap({{ requestType }}, map{{ requestType }}){% else %}{{ requestType }}{% endif %},
         {% endif %}
       {%- endfor %}
+      {% if path.requestBody and path.requestBody.content and path.requestBody.content['multipart/form-data'] %}body: formData, multipart: true,{% endif -%}
       {% if baseUrl %}baseUrl: '{{ baseUrl }}',{% endif %}
     })
   }
